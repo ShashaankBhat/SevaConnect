@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional global styles */
+body {
+  @apply bg-gray-50 text-gray-900;
+  font-family: 'Inter', sans-serif; /* or any preferred font */
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  @apply text-blue-500 hover:text-blue-600;
+  text-decoration: none;
+}
+
+button {
+  @apply cursor-pointer;
+}
+
+/* Custom classes for your project can go here */
