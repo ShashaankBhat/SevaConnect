@@ -1,34 +1,40 @@
+// server.js
 const express = require("express");
-const sequelize = require("./config/database");
+const sequelize = require("./config/db");
+const cors = require("cors");  
 
-// Import Models (and their relationships from index.js)
+// ----- MODELS -----
 const { Donor, NGO, Donation, Requirement } = require("./models"); 
-const donationRoutes = require("./routes/donations"); // only once
 
-const app = express();
-app.use(express.json());
+// ----- ROUTES -----
+const donationRoutes = require("./routes/donations");
+const authRoutes = require("./routes/auth");
+const donorRoutes = require("./routes/donors");
+const ngoRoutes = require("./routes/ngoRoutes");
 
-// Test Route
+const app = express(); // Initialize Express app
+
+// ----- MIDDLEWARE -----
+app.use(cors()); // Enable CORS for frontend
+app.use(express.json()); // Parse JSON request bodies
+
+// ----- TEST ROUTE -----
 app.get("/", (req, res) => {
   res.send("SevaConnect API Running...");
 });
 
-const authRoutes = require("./routes/auth");
+// ----- REGISTER ROUTES -----
 app.use("/api/auth", authRoutes);
-
-
-// Donation Routes
+app.use("/api/donors", donorRoutes);
+app.use("/api/ngos", ngoRoutes);
 app.use("/api/donations", donationRoutes);
 
-// Sync DB with all models
+// ----- DATABASE SYNC -----
 sequelize
-  .sync({ alter: true })
-  .then(() => {
-    console.log("Database synced and all tables created!");
-  })
-  .catch((err) => {
-    console.error("Error syncing database:", err);
-  });
+  .sync({ alter: true }) // Sync models with DB
+  .then(() => console.log("Database synced and all tables created!"))
+  .catch((err) => console.error("Error syncing database:", err));
 
+// ----- START SERVER -----
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

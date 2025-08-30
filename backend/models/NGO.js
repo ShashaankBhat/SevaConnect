@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const sequelize = require('../config/db');
 
 const NGO = sequelize.define('NGO', {
   ngo_id: {
@@ -8,11 +8,11 @@ const NGO = sequelize.define('NGO', {
     autoIncrement: true
   },
   ngo_name: {
-    type: DataTypes.STRING(150),
+    type: DataTypes.STRING(255),
     allowNull: false
   },
   ngo_email: {
-    type: DataTypes.STRING(100),
+    type: DataTypes.STRING(255),
     allowNull: false,
     unique: true
   },
@@ -20,26 +20,21 @@ const NGO = sequelize.define('NGO', {
     type: DataTypes.STRING(255),
     allowNull: false
   },
-  ngo_registration_no: {
-    type: DataTypes.STRING(100),
-    allowNull: false,
-    unique: true
-  },
-  ngo_status: {
-    type: DataTypes.ENUM('pending', 'approved', 'rejected'),
-    defaultValue: 'pending'
-  },
   ngo_address: {
-    type: DataTypes.STRING(255),
+    type: DataTypes.TEXT,
     allowNull: true
   },
-  ngo_contact: {
-    type: DataTypes.STRING(20),
-    allowNull: true
+  ngo_phone: {
+    type: DataTypes.STRING(255),
+    allowNull: false
+  },
+  approval_status: {
+    type: DataTypes.ENUM('Pending', 'Approved', 'Rejected'),
+    defaultValue: 'Pending'
   }
 }, {
   tableName: 'NGOs',
-  timestamps: true
+  timestamps: false
 });
 
 module.exports = NGO;

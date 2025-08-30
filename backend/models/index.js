@@ -4,11 +4,11 @@ const Requirement = require("./Requirement");
 const Donation = require("./Donation");
 
 // Associations
-Donor.hasMany(Donation, { foreignKey: "donorId" });
-Donation.belongsTo(Donor, { foreignKey: "donorId" });
+Donor.hasMany(Donation, { foreignKey: "donor_id" });
+Donation.belongsTo(Donor, { foreignKey: "donor_id" });
 
-NGO.hasMany(Donation, { foreignKey: "ngoId" });
-Donation.belongsTo(NGO, { foreignKey: "ngoId" });
+NGO.hasMany(Donation, { foreignKey: "ngo_id" });
+Donation.belongsTo(NGO, { foreignKey: "ngo_id" });
 
 Requirement.hasMany(Donation, { foreignKey: "requirement_id" });
 Donation.belongsTo(Requirement, { foreignKey: "requirement_id" });

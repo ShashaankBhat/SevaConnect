@@ -10,7 +10,6 @@ const RegisterDonor = () => {
     password: "",
     address: "",
     contact: "",
-    preferences: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,26 +22,29 @@ const RegisterDonor = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
     try {
-      const res = await fetch("http://localhost:5000/api/donors/register", {
+      const res = await fetch("http://localhost:5000/api/auth/register/donor", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          donor_name: form.name,
+          donor_email: form.email,
+          donor_password: form.password,
+          donor_address: form.address,
+          donor_phone: form.contact,
+        }),
       });
 
       const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Registration failed");
 
-      if (!res.ok) {
-        throw new Error(data.message || "Registration failed");
-      }
+      console.log("✅ Donor registered successfully:", data);
 
-      console.log("Donor registered successfully:", data);
-      navigate("/login"); // Redirect after success
+      if (data.token) localStorage.setItem("token", data.token);
+
+      navigate("/login");
     } catch (err) {
-      console.error("Error registering donor:", err.message);
+      console.error("❌ Error registering donor:", err.message);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -100,13 +102,6 @@ const RegisterDonor = () => {
             value={form.contact}
             onChange={handleChange}
             placeholder="Contact Number"
-            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-900"
-          />
-          <textarea
-            name="preferences"
-            value={form.preferences}
-            onChange={handleChange}
-            placeholder="Preferences (optional)"
             className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-900"
           />
           <button

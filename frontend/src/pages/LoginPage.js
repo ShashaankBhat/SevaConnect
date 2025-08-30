@@ -1,44 +1,51 @@
 // src/pages/LoginPage.js
+import { API_BASE_URL } from "../config/api";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const [entity, setEntity] = useState("donor");
+  const [entity, setEntity] = useState("donor"); // default user type
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
+
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
-        email,
-        password,
-        role: entity, // send which entity is logging in
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, role: entity }),
       });
 
-      // store token in localStorage
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", entity);
+      const data = await res.json();
 
-      // Redirect based on entity
-      if (entity === "admin") {
-        navigate("/admin/dashboard");
-      } else if (entity === "ngo") {
-        navigate("/ngo/dashboard");
-      } else {
-        navigate("/donor/dashboard");
-      }
+      if (!res.ok) throw new Error(data.message || "Login failed");
+
+      // Save user info + JWT token in localStorage
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ name: data.name || data.user?.name, email, entity })
+      );
+      if (data.token) localStorage.setItem("token", data.token);
+
+      navigate("/"); // redirect to homepage
     } catch (err) {
-      setError(err.response?.data?.error || "Login failed");
+      console.error("Login error:", err.message);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-green-50 px-4">
-      <div className="bg-white rounded-2xl shadow-lg p-10 w-full max-w-md">
+      <div className="bg-white p-10 rounded-2xl shadow-lg w-full max-w-md">
         <h2 className="text-3xl font-bold text-green-900 mb-6 text-center">
           Login
         </h2>
@@ -55,12 +62,15 @@ const LoginPage = () => {
                   : "bg-gray-200 text-gray-800 hover:bg-gray-300"
               }`}
             >
-              {type.toUpperCase()}
+              {type.charAt(0).toUpperCase() + type.slice(1)}
             </button>
           ))}
         </div>
 
-        {/* Login Form */}
+        {error && (
+          <p className="text-red-600 text-sm mb-3 text-center">{error}</p>
+        )}
+
         <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email"
@@ -78,12 +88,14 @@ const LoginPage = () => {
             className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-900"
             required
           />
-          {error && <p className="text-red-500 text-sm">{error}</p>}
           <button
             type="submit"
-            className="w-full bg-green-900 text-white font-semibold py-3 rounded-lg hover:bg-green-800 transition"
+            disabled={loading}
+            className="w-full bg-green-900 text-white font-semibold py-3 rounded-lg hover:bg-green-800 transition disabled:opacity-70"
           >
-            Login as {entity.charAt(0).toUpperCase() + entity.slice(1)}
+            {loading
+              ? "Logging in..."
+              : `Login as ${entity.charAt(0).toUpperCase() + entity.slice(1)}`}
           </button>
         </form>
 

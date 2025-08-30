@@ -1,16 +1,40 @@
-// src/components/NewsletterSignup.js
+import { API_BASE_URL } from "../config/api"; // add this import
 import React, { useState } from "react";
 
 const NewsletterSignup = ({ isOpen, onClose }) => {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (email) {
-      // Here you can integrate API call for newsletter subscription
+    setLoading(true);
+    setError("");
+
+    if (!email) {
+      setError("Please enter your email.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/newsletter/subscribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Subscription failed");
+
       setSubmitted(true);
       setEmail("");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -25,6 +49,7 @@ const NewsletterSignup = ({ isOpen, onClose }) => {
         >
           ×
         </button>
+
         {!submitted ? (
           <>
             <h2 className="text-2xl font-bold mb-4 text-green-900 text-center">
@@ -33,6 +58,9 @@ const NewsletterSignup = ({ isOpen, onClose }) => {
             <p className="text-gray-700 mb-6 text-center">
               Get updates about new campaigns, donation drives, and ways to help.
             </p>
+
+            {error && <p className="text-red-600 text-center mb-2">{error}</p>}
+
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <input
                 type="email"
@@ -44,9 +72,10 @@ const NewsletterSignup = ({ isOpen, onClose }) => {
               />
               <button
                 type="submit"
-                className="bg-green-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-800 transition"
+                disabled={loading}
+                className="bg-green-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-800 transition disabled:opacity-70"
               >
-                Subscribe
+                {loading ? "Subscribing..." : "Subscribe"}
               </button>
             </form>
           </>

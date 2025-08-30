@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+// src/pages/DonorHomePage.js
+import React from "react";
 import { useNavigate } from "react-router-dom";
 // Components
 import HomePageHero from "../components/HomePageHero";
@@ -7,30 +8,13 @@ import HowItWorks from "../components/HowItWorks";
 import NGOProfiles from "../components/NGOProfiles";
 import RequirementsShowcase from "../components/RequirementsShowcase";
 import DonationOpportunities from "../components/DonationOpportunities";
-import NGOUpdates from "../components/NGOUpdates";
 import Statistics from "../components/Statistics";
 import Testimonials from "../components/Testimonials";
 import FloatingSubscribe from "../components/FloatingSubscribe";
 import NewsletterSignup from "../components/NewsletterSignup";
 
-
-const HomePage = () => {
-  const [user, setUser] = useState(null);
-  const [showWelcome, setShowWelcome] = useState(false);
+const DonorHomePage = () => {
   const navigate = useNavigate();
-
-  // Fetch logged-in user
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      setShowWelcome(true);
-      // Fade out welcome message after 2 seconds
-      setTimeout(() => setShowWelcome(false), 2000);
-      // Mark user as visited for first/returning message
-      if (!localStorage.getItem("visited")) localStorage.setItem("visited", "true");
-    }
-  }, []);
 
   // Redirect handler for Donate Now button
   const handleDonateNow = () => {
@@ -39,19 +23,13 @@ const HomePage = () => {
 
   return (
     <>
-      {/* Welcome Popup */}
-      {showWelcome && (
-        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-700">
-          {localStorage.getItem("visited") ? "Welcome back!" : "Welcome for the first time!"}
-        </div>
-      )}
-
       {/* Homepage Hero */}
       <HomePageHero onDonateNow={handleDonateNow} />
 
       {/* Show CTA only if user is not logged in */}
-      {!user && <CTA onDonateNow={handleDonateNow} />}
+      <CTA onDonateNow={handleDonateNow} />
 
+      {/* Other homepage sections */}
       <HowItWorks />
 
       {/* NGO Profiles Section */}
@@ -61,7 +39,6 @@ const HomePage = () => {
 
       <RequirementsShowcase />
       <DonationOpportunities />
-      <NGOUpdates />
       <Statistics />
       <Testimonials />
       <FloatingSubscribe />
@@ -70,4 +47,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default DonorHomePage;
