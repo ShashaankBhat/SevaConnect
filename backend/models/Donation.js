@@ -1,3 +1,4 @@
+// models/Donation.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
@@ -9,21 +10,21 @@ const Donation = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
-    donorId: {
+    donor_id: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
       references: {
-        model: "Donors",
+        model: "donors",
         key: "donor_id",
       },
       onUpdate: "CASCADE",
       onDelete: "SET NULL",
     },
-    ngoId: {
+    ngo_id: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
       references: {
-        model: "NGOs",
+        model: "ngos",
         key: "ngo_id",
       },
       onUpdate: "CASCADE",
@@ -33,7 +34,7 @@ const Donation = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: "Requirements",
+        model: "requirements",
         key: "requirement_id",
       },
       onUpdate: "CASCADE",
@@ -42,28 +43,59 @@ const Donation = sequelize.define(
     donated_item: {
       type: DataTypes.STRING(100),
       allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [1, 100],
+      },
     },
     donated_quantity: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      validate: {
+        min: 1,
+        isInt: true,
+      },
     },
     pickup_or_drop: {
       type: DataTypes.ENUM("pickup", "drop"),
       allowNull: false,
+      validate: {
+        isIn: [["pickup", "drop"]],
+      },
     },
     donation_status: {
-      type: DataTypes.ENUM("pending", "received", "completed"),
+      type: DataTypes.ENUM("pending", "received", "completed", "cancelled"),
       defaultValue: "pending",
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
+      validate: {
+        isIn: [["pending", "received", "completed", "cancelled"]],
+      },
     },
   },
   {
-    tableName: "Donations",
-    timestamps: false, // We are managing created_at manually
+    tableName: "donations",
+    timestamps: false,
+    underscored: true,
+    hooks: {
+      beforeCreate: (donation) => {
+        if (donation.donated_quantity < 1) {
+          throw new Error("Donation quantity must be at least 1");
+        }
+      },
+    },
   }
 );
+
+// Instance methods
+Donation.prototype.isPending = function () {
+  return this.donation_status === "pending";
+};
+
+Donation.prototype.isCompleted = function () {
+  return this.donation_status === "completed";
+};
+
+Donation.prototype.canBeModified = function () {
+  return this.donation_status === "pending";
+};
 
 module.exports = Donation;

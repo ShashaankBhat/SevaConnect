@@ -18,7 +18,8 @@ const DonorHomePage = () => {
 
   // Redirect handler for Donate Now button
   const handleDonateNow = () => {
-    navigate("/donateitems");
+    // Ensure route matches DonateItems page
+    navigate("/donor/donate-items");
   };
 
   return (

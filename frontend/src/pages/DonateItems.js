@@ -1,6 +1,9 @@
+// src/pages/DonateItems.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-// All verified NGOs on your platform with city names
+import { useUser } from "../context/UserContext";
+import { API_BASE_URL } from "../config/api";
+
 const NGO_OPTIONS = [
   { name: "Snehalaya", city: "Pune" },
   { name: "Gramin Samassya Mukti Trust", city: "Aurangabad" },
@@ -9,8 +12,10 @@ const NGO_OPTIONS = [
   { name: "Goonj", city: "Delhi" },
   { name: "Pratham Education Foundation", city: "Mumbai" },
 ];
+
 export default function DonateItems() {
   const navigate = useNavigate();
+  const { user } = useUser(); // reactive user
   const [mode, setMode] = useState("items"); // 'items' or 'money'
   const [form, setForm] = useState({
     ngo: NGO_OPTIONS[0].name,
@@ -21,12 +26,15 @@ export default function DonateItems() {
     amount: "",
   });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const update = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!user) return setError("User not logged in.");
 
     // Validation
     if (mode === "items" && !form.item_name) {
@@ -36,14 +44,8 @@ export default function DonateItems() {
       return setError("Please enter a valid amount.");
     }
 
-    // Fetch all donations object
-    const allDonations = JSON.parse(localStorage.getItem("donations") || "{}");
+    setLoading(true);
 
-    // Get current user email
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const userEmail = user.email || "unknown";
-
-    // Create donation entry
     const entry =
       mode === "money"
         ? {
@@ -66,15 +68,34 @@ export default function DonateItems() {
             date: new Date().toISOString(),
           };
 
-    // Append to current user's donations
-    if (!allDonations[userEmail]) allDonations[userEmail] = [];
-    allDonations[userEmail].push(entry);
+    try {
+      // 1️⃣ Save to backend
+      const res = await fetch(`${API_BASE_URL}/donations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ ...entry, user_id: user.id }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to save donation to backend");
+      }
 
-    // Save back to localStorage
-    localStorage.setItem("donations", JSON.stringify(allDonations));
+      // 2️⃣ Save to localStorage
+      const allDonations = JSON.parse(localStorage.getItem("donations") || "{}");
+      if (!allDonations[user.email]) allDonations[user.email] = [];
+      allDonations[user.email].push(entry);
+      localStorage.setItem("donations", JSON.stringify(allDonations));
 
-    // Navigate to donation history
-    navigate("/donor/donation-history");
+      navigate("/donor/donation-history");
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to submit donation");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -83,7 +104,7 @@ export default function DonateItems() {
         <h2 className="text-3xl font-bold text-green-900 mb-6">
           {mode === "items" ? "Donate Items" : "Donate Money"}
         </h2>
-        {/* Mode selection */}
+
         <div className="flex gap-3 mb-6">
           {["items", "money"].map((m) => (
             <button
@@ -99,9 +120,10 @@ export default function DonateItems() {
             </button>
           ))}
         </div>
+
         {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+
         <form className="space-y-4" onSubmit={submit}>
-          {/* NGO selector */}
           <label className="block">
             <span className="text-sm text-gray-700">Select NGO</span>
             <select
@@ -117,6 +139,7 @@ export default function DonateItems() {
               ))}
             </select>
           </label>
+
           {mode === "items" ? (
             <>
               <input
@@ -168,11 +191,17 @@ export default function DonateItems() {
               className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-900"
             />
           )}
+
           <button
             type="submit"
-            className="w-full bg-green-900 text-white font-semibold py-3 rounded-lg hover:bg-green-800 transition"
+            disabled={loading}
+            className="w-full bg-green-900 text-white font-semibold py-3 rounded-lg hover:bg-green-800 transition disabled:opacity-70"
           >
-            {mode === "items" ? "Submit Item Donation" : "Donate Money"}
+            {loading
+              ? "Submitting..."
+              : mode === "items"
+              ? "Submit Item Donation"
+              : "Donate Money"}
           </button>
         </form>
       </div>

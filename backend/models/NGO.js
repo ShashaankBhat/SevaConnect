@@ -1,39 +1,44 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+// models/NGO.js
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db");
 
-const NGO = sequelize.define('NGO', {
+const NGO = sequelize.define("NGO", {
   ngo_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true
   },
   ngo_name: {
-    type: DataTypes.STRING(255),
+    type: DataTypes.STRING,
     allowNull: false
   },
   ngo_email: {
-    type: DataTypes.STRING(255),
+    type: DataTypes.STRING,
     allowNull: false,
-    unique: true
+    unique: true,
+    validate: {
+      isEmail: true
+    }
   },
   ngo_password: {
-    type: DataTypes.STRING(255),
+    type: DataTypes.STRING,
     allowNull: false
   },
-  ngo_address: {
-    type: DataTypes.TEXT,
+  ngo_registration_no: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true
+  },
+  ngo_contact: {
+    type: DataTypes.STRING,
     allowNull: true
   },
-  ngo_phone: {
-    type: DataTypes.STRING(255),
-    allowNull: false
-  },
-  approval_status: {
-    type: DataTypes.ENUM('Pending', 'Approved', 'Rejected'),
-    defaultValue: 'Pending'
+  ngo_status: {
+    type: DataTypes.ENUM("pending", "approved", "rejected"),
+    defaultValue: "pending"
   }
 }, {
-  tableName: 'NGOs',
+  tableName: "ngos",
   timestamps: false
 });
 

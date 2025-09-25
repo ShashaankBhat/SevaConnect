@@ -1,14 +1,16 @@
 // src/pages/DonorDashboard.js
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "../context/UserContext";
+import { API_BASE_URL } from "../config/api";
 
 export default function DonorDashboard() {
   const navigate = useNavigate();
+  const { user } = useUser(); // reactive user
   const [donations, setDonations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Suggested NGOs
   const suggestedNGOs = [
     {
       name: "Goonj",
@@ -36,28 +38,58 @@ export default function DonorDashboard() {
     },
   ];
 
-  // Fetch donor's donations from localStorage per logged-in user
+  // Fetch donations from localStorage first, then merge with backend
   useEffect(() => {
-    try {
-      const allDonations = JSON.parse(localStorage.getItem("donations") || "{}");
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const userEmail = user.email || "unknown";
-
-      // Only take donations for this user
-      const storedDonations = allDonations[userEmail] || [];
-      setDonations(storedDonations.reverse()); // latest first
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load donations.");
-    } finally {
+    if (!user) {
       setLoading(false);
+      return;
     }
-  }, []);
 
-  // Calculate donation stats
+    const fetchDonations = async () => {
+      try {
+        // Load from localStorage
+        const allDonations = JSON.parse(localStorage.getItem("donations") || "{}");
+        let storedDonations = allDonations[user.email] || [];
+
+        // Fetch from backend
+        const res = await fetch(`${API_BASE_URL}/donations?user_id=${user.id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+
+        if (res.ok) {
+          const backendDonations = await res.json();
+
+          // Merge backend + localStorage, remove duplicates by id
+          const merged = [
+            ...storedDonations,
+            ...backendDonations.filter(
+              (bd) => !storedDonations.some((sd) => sd.id === bd.id)
+            ),
+          ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+          storedDonations = merged;
+
+          // Update localStorage
+          allDonations[user.email] = merged;
+          localStorage.setItem("donations", JSON.stringify(allDonations));
+        }
+
+        setDonations(storedDonations);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load donations.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDonations();
+  }, [user]);
+
   const totalMoney = donations
     .filter((d) => d.type === "money")
     .reduce((sum, d) => sum + d.amount, 0);
+
   const totalItems = donations
     .filter((d) => d.type !== "money")
     .reduce((sum, d) => sum + d.quantity, 0);
@@ -68,9 +100,10 @@ export default function DonorDashboard() {
   return (
     <div className="min-h-screen bg-green-50 px-4 py-10 pt-28">
       <div className="max-w-5xl mx-auto space-y-10">
-        {/* Welcome / Summary Section */}
         <section className="bg-white p-6 rounded-2xl shadow-md">
-          <h2 className="text-3xl font-bold text-green-900 mb-4">Welcome Back!</h2>
+          <h2 className="text-3xl font-bold text-green-900 mb-4">
+            Welcome Back, {user?.name || "Donor"}!
+          </h2>
           <p className="text-gray-700 mb-2">
             You've made <span className="font-semibold">{donations.length}</span> donations.
           </p>
@@ -82,7 +115,7 @@ export default function DonorDashboard() {
           </p>
         </section>
 
-        {/* Donations Section */}
+        {/* Donations List */}
         <section>
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-green-900">Your Donations</h2>
@@ -93,6 +126,7 @@ export default function DonorDashboard() {
               Make a Donation
             </button>
           </div>
+
           {donations.length === 0 ? (
             <p className="text-center text-gray-600">No donations made yet.</p>
           ) : (
@@ -142,7 +176,7 @@ export default function DonorDashboard() {
           )}
         </section>
 
-        {/* Suggested NGOs Section */}
+        {/* Suggested NGOs */}
         <section>
           <h3 className="text-2xl font-bold text-green-900 mb-4">
             Suggested NGOs You Can Support

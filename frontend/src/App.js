@@ -2,6 +2,9 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
+// Context
+import { UserProvider } from "./context/UserContext";
+
 // Public pages
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
@@ -19,6 +22,7 @@ import DonorDashboard from "./pages/DonorDashboard";
 // Components
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import ProtectedRoute from "./components/ProtectedRoute"; // <-- import route guard
 
 // Layout wrapper for all pages
 const Layout = ({ children }) => {
@@ -34,87 +38,103 @@ const Layout = ({ children }) => {
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Public routes */}
-        <Route
-          path="/"
-          element={
-            <Layout>
-              <HomePage />
-            </Layout>
-          }
-        />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route
-          path="/donate"
-          element={
-            <Layout>
-              <DonateItems />
-            </Layout>
-          }
-        />
+    <UserProvider>
+      <Router>
+        <Routes>
+          {/* Public routes */}
+          <Route
+            path="/"
+            element={
+              <Layout>
+                <HomePage />
+              </Layout>
+            }
+          />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route
+            path="/donate"
+            element={
+              <Layout>
+                <DonateItems />
+              </Layout>
+            }
+          />
 
-        {/* Donor routes */}
-        <Route
-          path="/donor/home"
-          element={
-            <Layout>
-              <DonorHomePage />
-            </Layout>
-          }
-        />
-        <Route
-          path="/donor/profile"
-          element={
-            <Layout>
-              <DonorProfile />
-            </Layout>
-          }
-        />
-        <Route
-          path="/donor/edit-profile"
-          element={
-            <Layout>
-              <EditProfile />
-            </Layout>
-          }
-        />
-        <Route
-          path="/donor/donate-items"
-          element={
-            <Layout>
-              <DonateItems />
-            </Layout>
-          }
-        />
-        <Route
-          path="/donor/donation-history"
-          element={
-            <Layout>
-              <DonationHistory />
-            </Layout>
-          }
-        />
-        <Route
-          path="/donor/suggested-ngos"
-          element={
-            <Layout>
-              <SuggestedNGOs />
-            </Layout>
-          }
-        />
-        <Route
-          path="/donor/dashboard"
-          element={
-            <Layout>
-              <DonorDashboard />
-            </Layout>
-          }
-        />
-      </Routes>
-    </Router>
+          {/* Donor routes (protected) */}
+          <Route
+            path="/donor/home"
+            element={
+              <ProtectedRoute role="donor">
+                <Layout>
+                  <DonorHomePage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/donor/profile"
+            element={
+              <ProtectedRoute role="donor">
+                <Layout>
+                  <DonorProfile />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/donor/edit-profile"
+            element={
+              <ProtectedRoute role="donor">
+                <Layout>
+                  <EditProfile />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/donor/donate-items"
+            element={
+              <ProtectedRoute role="donor">
+                <Layout>
+                  <DonateItems />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/donor/donation-history"
+            element={
+              <ProtectedRoute role="donor">
+                <Layout>
+                  <DonationHistory />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/donor/suggested-ngos"
+            element={
+              <ProtectedRoute role="donor">
+                <Layout>
+                  <SuggestedNGOs />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/donor/dashboard"
+            element={
+              <ProtectedRoute role="donor">
+                <Layout>
+                  <DonorDashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </UserProvider>
   );
 }
 

@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "../config/api"; // add this import
+import { API_BASE_URL } from "../config/api"; // Ensure this points to your backend
 import React, { useState } from "react";
 
 const NewsletterSignup = ({ isOpen, onClose }) => {
@@ -19,13 +19,20 @@ const NewsletterSignup = ({ isOpen, onClose }) => {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/newsletter/subscribe`, {
+      const res = await fetch(`${API_BASE_URL}/api/newsletter/subscribe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
 
-      const data = await res.json();
+      // Ensure the response is JSON before parsing
+      const contentType = res.headers.get("content-type");
+      let data;
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        throw new Error("Server did not return JSON. Check API route.");
+      }
 
       if (!res.ok) throw new Error(data.message || "Subscription failed");
 
